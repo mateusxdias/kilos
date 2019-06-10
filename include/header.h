@@ -26,7 +26,7 @@ const int daylightOffset_sec = -3600 * 3;
 //Define Classes
 ConnectionClass Connection;
 LogClass Log;
-HX711 scale(26, 25);
+HX711 scale(19, 18);
 
 //Define variáveis
 float value = 0;
