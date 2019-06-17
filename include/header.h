@@ -14,7 +14,7 @@
 const char *SSID = "Positiva";
 const char *PASS = "#Positiva2019#";
 const char *TOPIC_SUBSCRIBE = "kilos";
-const char *TOPIC_PUBLISH = "kilos/value";
+const char *TOPIC_PUBLISH = "kilos/value2";
 const char *BROKER_MQTT = "mqtt.positiva.app";
 uint16_t BROKER_PORT = 1883;
 
@@ -29,7 +29,7 @@ LogClass Log;
 HX711 scale(19, 18);
 
 //Define variáveis
-float value = 0;
+long value = 0;
 long last_msg = 0;
 long t;
 

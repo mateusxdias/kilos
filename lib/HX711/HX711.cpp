@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <HX711.h>
+#include "soc/rtc.h"
 /*
 #if ARDUINO_VERSION <= 106
     // "yield" is not implemented as noop in older Arduino Core releases, so let's define it.
@@ -58,12 +59,13 @@ long HX711::read() {
 	unsigned long value = 0;
 	uint8_t data[3] = { 0 };
 	uint8_t filler = 0x00;
-//rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
+	
+	// rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
 	// pulse the clock pin 24 times to read the data
 	data[2] = shiftIn(DOUT, PD_SCK, MSBFIRST);
 	data[1] = shiftIn(DOUT, PD_SCK, MSBFIRST);
 	data[0] = shiftIn(DOUT, PD_SCK, MSBFIRST);
-//	rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+	// rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
 
 	// set the channel and the gain factor for the next reading using the clock pin
 	for (unsigned int i = 0; i < GAIN; i++) {

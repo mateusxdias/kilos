@@ -3,9 +3,9 @@
 void setup()
 {
   Serial.begin(115200);
-  delay(1000);
+  // delay(1000);
   setCpuFrequencyMhz(80);
-  delay(1000);
+  // delay(1000);
   Serial.print("Frequencia da CPU: ");
   Serial.println(getCpuFrequencyMhz());
   delay(1000);
@@ -63,7 +63,7 @@ void loop()
   if ((millis() - last_msg > 5000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
-
+    
     value = scale.get_units(10);
     Serial.println(value);
     publish("value", String(value), TOPIC_PUBLISH);
@@ -74,7 +74,7 @@ void loop()
 }
 void hx_setup()
 {
-
+  // calibrate();
   Serial.println("Before setting up the scale:");
   Serial.print("read: \t\t");
   Serial.println(scale.read());			// print a raw reading from the ADC
