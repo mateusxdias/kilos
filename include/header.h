@@ -17,6 +17,8 @@ const char *TOPIC_SUBSCRIBE = "kilos";
 const char *TOPIC_PUBLISH = "kilos/value2";
 const char *BROKER_MQTT = "mqtt.positiva.app";
 uint16_t BROKER_PORT = 1883;
+const char *TOPIC_SUBSCRIBE_CALIBRATE = "kilos/calibrate";
+const char *TOPIC_SUBSCRIBE_TARE = "kilos/tare";
 
 //Define configurations do Timer
 const char *ntpServer = "pool.ntp.org";

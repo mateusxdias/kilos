@@ -25,7 +25,16 @@ void setup()
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
   Connection.ota();
+	Connection.func_recebe(recebe);
+
   Connection.set_server(BROKER_PORT, BROKER_MQTT);
+
+	Connection.mqtt_Connect();
+	Connection.subscribe_topic();
+	Connection.set_topic(TOPIC_SUBSCRIBE_UPDATE);
+	Connection.subscribe_topic();
+
+
 }
 void loop()
 {
@@ -74,7 +83,7 @@ void loop()
 }
 void hx_setup()
 {
-  // calibrate();
+  calibrate();
   Serial.println("Before setting up the scale:");
   Serial.print("read: \t\t");
   Serial.println(scale.read());			// print a raw reading from the ADC
@@ -109,7 +118,6 @@ void hx_setup()
 
   Serial.println("Readings:");
 
-  
 }
 void calibrate()
 {
@@ -151,4 +159,15 @@ void printLocalTime()
   Log.append_file("/log.txt", "ON: ");
   Log.append_file("/log.txt", timeStringBuff);
   Log.append_file("/log.txt", " ->");
+}
+void recebe(char *topic, byte *payload, unsigned int length)
+{
+	if (strcmp(topic, "kilos/calibrate") == 0)
+	{
+		calibrate();
+	}
+	else
+	{
+    scale.tare();
+  }
 }
