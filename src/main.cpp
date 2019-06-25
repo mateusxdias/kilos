@@ -3,12 +3,6 @@
 void setup()
 {
   Serial.begin(115200);
-  // delay(1000);
-  setCpuFrequencyMhz(80);
-  // delay(1000);
-  Serial.print("Frequencia da CPU: ");
-  Serial.println(getCpuFrequencyMhz());
-  delay(1000);
 
   Log.begin();
   Log.list_dir("/");
@@ -25,16 +19,18 @@ void setup()
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
   Connection.ota();
-	Connection.func_recebe(recebe);
+  Connection.func_recebe(recebe);
 
   Connection.set_server(BROKER_PORT, BROKER_MQTT);
 
-	Connection.mqtt_Connect();
-	Connection.subscribe_topic();
-	Connection.set_topic(TOPIC_SUBSCRIBE_UPDATE);
-	Connection.subscribe_topic();
+  Connection.mqtt_Connect();
+  Connection.subscribe_topic();
 
+  Connection.set_topic(TOPIC_SUBSCRIBE_CALIBRATE);
+  Connection.subscribe_topic();
 
+  Connection.set_topic(TOPIC_SUBSCRIBE_TARE);
+  Connection.subscribe_topic();
 }
 void loop()
 {
@@ -68,68 +64,40 @@ void loop()
     delay(1000);
   }
 
-  //The magical happens here
   if ((millis() - last_msg > 5000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
-    
-    value = scale.get_units(10);
+
+    scale.power_up();
+    Serial.print("\t| average:\t");
+    int value = scale.get_units(10);
     Serial.println(value);
+    scale.power_down(); 
+
     publish("value", String(value), TOPIC_PUBLISH);
   }
 
   Connection.mqtt_Loop();
-
 }
 void hx_setup()
 {
-  calibrate();
-  Serial.println("Before setting up the scale:");
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());			// print a raw reading from the ADC
-
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));  	// print the average of 20 readings from the ADC
-
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight (not set yet)
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);	// print the average of 5 readings from the ADC minus tare weight (not set) divided 
-						// by the SCALE parameter (not set yet)  
-
-  scale.set_scale(-104.80); 
-  scale.tare(); 			      
-  
-  Serial.println("After setting up the scale:");
-
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());                 // print a raw reading from the ADC
-
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));       // print the average of 20 readings from the ADC
-
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight, set with tare()
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);        // print the average of 5 readings from the ADC minus tare weight, divided 
-						// by the SCALE parameter set with set_scale
-
-  Serial.println("Readings:");
-
+  scale.begin(19, 18);
+  scale.set_scale(292.80);
+  scale.tare();
 }
 void calibrate()
 {
-  // uncomment if you want to calibrate the bowl
   scale.set_scale();
   scale.tare();
   Serial.println("Put known weight on ");
   delay(5000);
-  Serial.print(scale.get_units(10));
+  int calibrate_value = scale.get_units(10);
+  Serial.println(calibrate_value);
   Serial.print(" Divide this value to the weight and insert it in the scale.set_scale() statement");
-  while (1 == 1)
-    ;
+  delay(10000);
+  publish("calibrate", String(calibrate_value), TOPIC_PUBLISH);
+  delay(10000);
+  ESP.restart();
 }
 void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
 {
@@ -162,12 +130,12 @@ void printLocalTime()
 }
 void recebe(char *topic, byte *payload, unsigned int length)
 {
-	if (strcmp(topic, "kilos/calibrate") == 0)
-	{
-		calibrate();
-	}
-	else
-	{
+  if (strcmp(topic, "kilos/calibrate") == 0)
+  {
+    calibrate();
+  }
+  else
+  {
     scale.tare();
   }
 }

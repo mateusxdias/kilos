@@ -3,7 +3,8 @@
 #include <ArduinoJson.h>
 #include <LogClass.h>
 #include <EEPROM.h>
-#include <HX711.h>
+#include "HX711.h"
+
 
 //Bibliotecas Internas
 #include "esp32-hal-cpu.h"
@@ -28,10 +29,9 @@ const int daylightOffset_sec = -3600 * 3;
 //Define Classes
 ConnectionClass Connection;
 LogClass Log;
-HX711 scale(19, 18);
+HX711 scale;
 
 //Define variáveis
-long value = 0;
 long last_msg = 0;
 long t;
 
@@ -40,7 +40,7 @@ void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH);
 void hx_setup();
 void calibrate();
 void printLocalTime();
-
+void recebe(char *topic, byte *payload, unsigned int length);
 /*
 LOGS MQTT ->
 
