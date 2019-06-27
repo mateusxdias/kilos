@@ -8,8 +8,6 @@ void setup()
   Log.list_dir("/");
   Log.read_file("/log.txt");
 
-  hx_setup();
-
   Connection.connect_Wifi(SSID, PASS);
 
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
@@ -31,6 +29,8 @@ void setup()
 
   Connection.set_topic(TOPIC_SUBSCRIBE_TARE);
   Connection.subscribe_topic();
+
+  hx_setup();
 }
 void loop()
 {
@@ -64,7 +64,7 @@ void loop()
     delay(1000);
   }
 
-  if ((millis() - last_msg > 5000) && (Connection.mqtt_Connected()))
+  if ((millis() - last_msg > 10000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
 
@@ -72,7 +72,7 @@ void loop()
     Serial.print("\t| average:\t");
     int value = scale.get_units(10);
     Serial.println(value);
-    scale.power_down(); 
+    scale.power_down();
 
     publish("value", String(value), TOPIC_PUBLISH);
   }
@@ -82,8 +82,12 @@ void loop()
 void hx_setup()
 {
   scale.begin(19, 18);
-  scale.set_scale(292.80);
+  // calibrate();
+  scale.set_scale(-209.36);
   scale.tare();
+  delay(1000);
+  scale.set_offset(-1070613);
+  // publish("Offset", String(off), TOPIC_PUBLISH);
 }
 void calibrate()
 {
@@ -137,5 +141,8 @@ void recebe(char *topic, byte *payload, unsigned int length)
   else
   {
     scale.tare();
+    delay(1000);
+    long offset = scale.get_offset();
+    publish("Offset", String(offset), TOPIC_PUBLISH);
   }
 }
