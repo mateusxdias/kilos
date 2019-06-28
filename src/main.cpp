@@ -64,50 +64,69 @@ void loop()
     delay(1000);
   }
 
-  if ((millis() - last_msg > 10000) && (Connection.mqtt_Connected()))
+  if ((millis() - last_msg > 3000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
 
-    scale.power_up();
-    Serial.print("\t| average:\t");
-    int value = scale.get_units(10);
-    Serial.println(value);
-    scale.power_down();
+    scale1.power_up();
+    scale2.power_up();
 
-    publish("value", String(value), TOPIC_PUBLISH);
+    int value1 = scale1.get_units(10);
+    int value2 = scale2.get_units(10);
+
+    Serial.print("Balança 1: ");
+    Serial.println(value1);
+
+    Serial.print("Balança 2: ");
+    Serial.println(value2);
+    Serial.println(" ");
+    Serial.println(" ");
+     
+    scale1.power_down();
+    scale2.power_down();
+
+    publish("value1", String(value1), "value2", String(value2), TOPIC_PUBLISH);
   }
 
   Connection.mqtt_Loop();
 }
 void hx_setup()
 {
-  scale.begin(19, 18);
+  scale1.begin(19, 18);
+  scale2.begin(21, 22);
+
   // calibrate();
-  scale.set_scale(-209.36);
-  scale.tare();
-  delay(1000);
-  scale.set_offset(-1070613);
+  scale1.set_scale(-209.36);
+  scale2.set_scale(-209.36);
+
+  scale1.tare();
+  scale2.tare();
+
+  // delay(1000);
+  // scale1.set_offset(-1070613);
+  // scale2.set_offset(-1070613);
   // publish("Offset", String(off), TOPIC_PUBLISH);
 }
 void calibrate()
 {
-  scale.set_scale();
-  scale.tare();
+  scale1.set_scale();
+  scale1.tare();
   Serial.println("Put known weight on ");
   delay(5000);
-  int calibrate_value = scale.get_units(10);
+  int calibrate_value = scale1.get_units(10);
   Serial.println(calibrate_value);
-  Serial.print(" Divide this value to the weight and insert it in the scale.set_scale() statement");
+  Serial.print(" Divide this value to the weight and insert it in the scale1.set_scale1() statement");
   delay(10000);
-  publish("calibrate", String(calibrate_value), TOPIC_PUBLISH);
+  publish("calibrate", String(calibrate_value),"","", TOPIC_PUBLISH);
   delay(10000);
   ESP.restart();
 }
-void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
+void publish(String _payload1, String _var1,String _payload2, String _var2, const char *_TOPIC_PUBLISH)
 {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject &JSONencoder = JSONbuffer.createObject();
   JSONencoder[_payload1] = _var1;
+  JSONencoder[_payload2] = _var2;
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -140,9 +159,9 @@ void recebe(char *topic, byte *payload, unsigned int length)
   }
   else
   {
-    scale.tare();
+    scale1.tare();
     delay(1000);
-    long offset = scale.get_offset();
-    publish("Offset", String(offset), TOPIC_PUBLISH);
+    long offset = scale1.get_offset();
+    publish("Offset", String(offset),"","", TOPIC_PUBLISH);
   }
 }

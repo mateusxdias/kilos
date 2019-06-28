@@ -29,14 +29,15 @@ const int daylightOffset_sec = -3600 * 3;
 //Define Classes
 ConnectionClass Connection;
 LogClass Log;
-HX711 scale;
+HX711 scale1;
+HX711 scale2;
 
 //Define variáveis
 long last_msg = 0;
 long t;
 
 //Define funções
-void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH);
+void publish(String _payload1, String _var1,String _payload2, String _var2, const char *_TOPIC_PUBLISH);
 void hx_setup();
 void calibrate();
 void printLocalTime();
