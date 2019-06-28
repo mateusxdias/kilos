@@ -165,3 +165,54 @@ void recebe(char *topic, byte *payload, unsigned int length)
     publish("Offset", String(offset),"","", TOPIC_PUBLISH);
   }
 }
+signed short Stabilize ( signed short value, signed short fdiff, unsigned short fcount )
+{
+	static unsigned short count_soft 				= 0xFFFF ;
+	static unsigned short count_high_difference 	= 0xFFFF ;
+	static signed int result 						= 0 ;
+	
+	signed int dif ;
+
+	/* Verify if value of variable is different */
+	if ( result != value  )
+	{
+		/* Calcule the different */
+		dif = value-result ;
+		/* Verify if difference is higher of fdiff */
+		if ( ( dif > fdiff )||(dif < (fdiff*-1)) )
+		{
+			/* Clear var of lower difference */
+			count_soft = 0 ;
+			/* if counter is higher of parameter */
+			if ( (++count_high_difference) > fcount )
+			{
+				/* Clear counter */
+				count_high_difference = 0 ;
+				/* Make equal sensor and var */
+				result = value ;
+			}
+		} else
+		{
+			/* Clear var of lower difference */
+			count_high_difference = 0 ;
+			/* if counter is higher of parameter */
+			if ( (++count_soft) > fcount )
+			{
+				/* Clear counter */
+				count_soft = 0 ;
+				/* Soft rise */
+				if ( dif < 0 )
+					-- result ;
+				else
+					++ result ;
+			}
+		}
+	} else
+	{
+		/* Clear counters */
+		count_soft = 0 ;
+		count_high_difference = 0 ;
+		result = value ;
+	}
+	return result ;
+}
