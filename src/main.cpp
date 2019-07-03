@@ -3,18 +3,10 @@
 void setup()
 {
   Serial.begin(115200);
-  // delay(1000);
-  setCpuFrequencyMhz(80);
-  // delay(1000);
-  Serial.print("Frequencia da CPU: ");
-  Serial.println(getCpuFrequencyMhz());
-  delay(1000);
 
   Log.begin();
   Log.list_dir("/");
   Log.read_file("/log.txt");
-
-  hx_setup();
 
   Connection.connect_Wifi(SSID, PASS);
 
@@ -25,7 +17,20 @@ void setup()
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
   Connection.ota();
+  Connection.func_recebe(recebe);
+
   Connection.set_server(BROKER_PORT, BROKER_MQTT);
+
+  Connection.mqtt_Connect();
+  Connection.subscribe_topic();
+
+  Connection.set_topic(TOPIC_SUBSCRIBE_CALIBRATE);
+  Connection.subscribe_topic();
+
+  Connection.set_topic(TOPIC_SUBSCRIBE_TARE);
+  Connection.subscribe_topic();
+
+  hx_setup();
 }
 void loop()
 {
@@ -59,75 +64,69 @@ void loop()
     delay(1000);
   }
 
-  //The magical happens here
-  if ((millis() - last_msg > 5000) && (Connection.mqtt_Connected()))
+  if ((millis() - last_msg > 3000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
-    
-    value = scale.get_units(10);
-    Serial.println(value);
-    publish("value", String(value), TOPIC_PUBLISH);
+
+    scale1.power_up();
+    scale2.power_up();
+
+    int value1 = scale1.get_units(10);
+    int value2 = scale2.get_units(10);
+
+    Serial.print("Balança 1: ");
+    Serial.println(value1);
+
+    Serial.print("Balança 2: ");
+    Serial.println(value2);
+    Serial.println(" ");
+    Serial.println(" ");
+
+    scale1.power_down();
+    scale2.power_down();
+
+    publish("value1", String(value1), "value2", String(value2), TOPIC_PUBLISH);
   }
 
   Connection.mqtt_Loop();
-
 }
 void hx_setup()
 {
+  scale1.begin(19, 18);
+  scale2.begin(21, 22);
+
   // calibrate();
-  Serial.println("Before setting up the scale:");
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());			// print a raw reading from the ADC
+  scale1.set_scale(-209.36);
+  scale2.set_scale(-209.36);
 
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));  	// print the average of 20 readings from the ADC
+  scale1.tare();
+  scale2.tare();
 
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight (not set yet)
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);	// print the average of 5 readings from the ADC minus tare weight (not set) divided 
-						// by the SCALE parameter (not set yet)  
-
-  scale.set_scale(-104.80); 
-  scale.tare(); 			      
-  
-  Serial.println("After setting up the scale:");
-
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());                 // print a raw reading from the ADC
-
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));       // print the average of 20 readings from the ADC
-
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight, set with tare()
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);        // print the average of 5 readings from the ADC minus tare weight, divided 
-						// by the SCALE parameter set with set_scale
-
-  Serial.println("Readings:");
-
-  
+  // delay(1000);
+  // scale1.set_offset(-1070613);
+  // scale2.set_offset(-1070613);
+  // publish("Offset", String(off), TOPIC_PUBLISH);
 }
 void calibrate()
 {
-  // uncomment if you want to calibrate the bowl
-  scale.set_scale();
-  scale.tare();
+  scale1.set_scale();
+  scale1.tare();
   Serial.println("Put known weight on ");
   delay(5000);
-  Serial.print(scale.get_units(10));
-  Serial.print(" Divide this value to the weight and insert it in the scale.set_scale() statement");
-  while (1 == 1)
-    ;
+  int calibrate_value = scale1.get_units(10);
+  Serial.println(calibrate_value);
+  Serial.print(" Divide this value to the weight and insert it in the scale1.set_scale1() statement");
+  delay(10000);
+  publish("calibrate", String(calibrate_value), "", "", TOPIC_PUBLISH);
+  delay(10000);
+  ESP.restart();
 }
-void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
+void publish(String _payload1, String _var1, String _payload2, String _var2, const char *_TOPIC_PUBLISH)
 {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject &JSONencoder = JSONbuffer.createObject();
   JSONencoder[_payload1] = _var1;
+  JSONencoder[_payload2] = _var2;
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -151,4 +150,72 @@ void printLocalTime()
   Log.append_file("/log.txt", "ON: ");
   Log.append_file("/log.txt", timeStringBuff);
   Log.append_file("/log.txt", " ->");
+}
+void recebe(char *topic, byte *payload, unsigned int length)
+{
+  if (strcmp(topic, "kilos/calibrate") == 0)
+  {
+    calibrate();
+  }
+  else
+  {
+    scale1.tare();
+    delay(1000);
+    long offset = scale1.get_offset();
+    publish("Offset", String(offset), "", "", TOPIC_PUBLISH);
+  }
+}
+
+signed short Stabilize(signed short value, signed short fdiff, unsigned short fcount)
+{
+  static unsigned short count_soft = 0xFFFF;
+  static unsigned short count_high_difference = 0xFFFF;
+  static signed int result = 0;
+
+  signed int dif;
+
+  /* Verify if value of variable is different */
+  if (result != value)
+  {
+    /* Calcule the different */
+    dif = value - result;
+    /* Verify if difference is higher of fdiff */
+    if ((dif > fdiff) || (dif < (fdiff * -1)))
+    {
+      /* Clear var of lower difference */
+      count_soft = 0;
+      /* if counter is higher of parameter */
+      if ((++count_high_difference) > fcount)
+      {
+        /* Clear counter */
+        count_high_difference = 0;
+        /* Make equal sensor and var */
+        result = value;
+      }
+    }
+    else
+    {
+      /* Clear var of lower difference */
+      count_high_difference = 0;
+      /* if counter is higher of parameter */
+      if ((++count_soft) > fcount)
+      {
+        /* Clear counter */
+        count_soft = 0;
+        /* Soft rise */
+        if (dif < 0)
+          --result;
+        else
+          ++result;
+      }
+    }
+  }
+  else
+  {
+    /* Clear counters */
+    count_soft = 0;
+    count_high_difference = 0;
+    result = value;
+  }
+  return result;
 }
