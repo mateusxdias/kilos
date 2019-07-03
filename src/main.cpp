@@ -165,7 +165,6 @@ void recebe(char *topic, byte *payload, unsigned int length)
     publish("Offset", String(offset), "", "", TOPIC_PUBLISH);
   }
 }
-
 signed short Stabilize(signed short value, signed short fdiff, unsigned short fcount)
 {
   static unsigned short count_soft = 0xFFFF;
