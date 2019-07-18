@@ -15,7 +15,7 @@
 const char *SSID = "Positiva";
 const char *PASS = "#Positiva2019#";
 const char *TOPIC_SUBSCRIBE = "kilos";
-const char *TOPIC_PUBLISH = "kilos/value2";
+const char *TOPIC_PUBLISH = "kilos/value";
 const char *BROKER_MQTT = "mqtt.positiva.app";
 uint16_t BROKER_PORT = 1883;
 const char *TOPIC_SUBSCRIBE_CALIBRATE = "kilos/calibrate";
@@ -37,7 +37,7 @@ long last_msg = 0;
 long t;
 
 //Define funções
-void publish(String _payload1, String _var1,String _payload2, String _var2, const char *_TOPIC_PUBLISH);
+void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH);
 void hx_setup();
 void calibrate();
 void printLocalTime();

@@ -69,23 +69,13 @@ void loop()
     last_msg = millis();
 
     scale1.power_up();
-    scale2.power_up();
 
     int value1 = scale1.get_units(10);
-    int value2 = scale2.get_units(10);
 
     Serial.print("Balança 1: ");
     Serial.println(value1);
 
-    Serial.print("Balança 2: ");
-    Serial.println(value2);
-    Serial.println(" ");
-    Serial.println(" ");
-
-    scale1.power_down();
-    scale2.power_down();
-
-    publish("value1", String(value1), "value2", String(value2), TOPIC_PUBLISH);
+    publish("value1", String(value1), TOPIC_PUBLISH);
   }
 
   Connection.mqtt_Loop();
@@ -93,19 +83,16 @@ void loop()
 void hx_setup()
 {
   scale1.begin(19, 18);
-  scale2.begin(21, 22);
+
+
+  scale1.set_gain(32);
 
   // calibrate();
-  scale1.set_scale(-209.36);
-  scale2.set_scale(-209.36);
+
+  scale1.set_scale(-72.62);
 
   scale1.tare();
-  scale2.tare();
 
-  // delay(1000);
-  // scale1.set_offset(-1070613);
-  // scale2.set_offset(-1070613);
-  // publish("Offset", String(off), TOPIC_PUBLISH);
 }
 void calibrate()
 {
@@ -117,16 +104,15 @@ void calibrate()
   Serial.println(calibrate_value);
   Serial.print(" Divide this value to the weight and insert it in the scale1.set_scale1() statement");
   delay(10000);
-  publish("calibrate", String(calibrate_value), "", "", TOPIC_PUBLISH);
+  publish("calibrate", String(calibrate_value), TOPIC_PUBLISH);
   delay(10000);
   ESP.restart();
 }
-void publish(String _payload1, String _var1, String _payload2, String _var2, const char *_TOPIC_PUBLISH)
+void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
 {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject &JSONencoder = JSONbuffer.createObject();
   JSONencoder[_payload1] = _var1;
-  JSONencoder[_payload2] = _var2;
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -162,7 +148,7 @@ void recebe(char *topic, byte *payload, unsigned int length)
     scale1.tare();
     delay(1000);
     long offset = scale1.get_offset();
-    publish("Offset", String(offset), "", "", TOPIC_PUBLISH);
+    publish("Offset", String(offset), TOPIC_PUBLISH);
   }
 }
 signed short Stabilize(signed short value, signed short fdiff, unsigned short fcount)
