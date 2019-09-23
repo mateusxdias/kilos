@@ -1,18 +1,20 @@
 #include <header.h>
+#include <Wire.h>
+#include <Adafruit_ADS1015.h>
+
+#define ANALOG_PIN 36
+
+Adafruit_ADS1115 ads(0x48);
+
+int RawValue = 0;
+float Voltage = 0.0;
+float tempC = 0;
 
 void setup()
 {
   Serial.begin(115200);
 
-  // Log.begin();
-  // Log.list_dir("/");
-  // Log.read_file("/log.txt");
-
   Connection.connect_Wifi(SSID, PASS);
-
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
-  printLocalTime();
 
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
@@ -31,6 +33,8 @@ void setup()
   Connection.subscribe_topic();
 
   hx_setup();
+
+  ads.begin();
 }
 void loop()
 {
@@ -46,9 +50,6 @@ void loop()
     const char *cstr2 = str.c_str();
     Serial.println(cstr2);
 
-    // Log.append_file("/log.txt", cstr2);
-    // Log.append_file("/log.txt", ", ");
-
     Connection.mqtt_Connect();
     Connection.subscribe_topic();
 
@@ -58,9 +59,6 @@ void loop()
     cstr2 = str.c_str();
     Serial.println(cstr2);
 
-    // Log.append_file("/log.txt", cstr2);
-    // Log.append_file("/log.txt", ", ");
-
     delay(1000);
   }
 
@@ -68,8 +66,17 @@ void loop()
   {
     last_msg = millis();
 
-    scale1.power_up();
+    int16_t adc0 = 0;
+    adc0 = ads.readADC_SingleEnded(0);
+    Voltage = (adc0 * 0.1875);
+    tempC = Voltage * 0.1;
+    Serial.print(adc0);
+    Serial.print(" ");
+    Serial.print(Voltage);
+    Serial.print(" ");
+    Serial.println(tempC);
 
+    scale1.power_up();
     int value1 = scale1.get_units(10);
 
     Serial.print("Balança 1: ");
@@ -79,19 +86,13 @@ void loop()
   }
 
   Connection.mqtt_Loop();
+  delay(500);
 }
 void hx_setup()
 {
   scale1.begin(19, 18);
 
-
   scale1.set_gain(32);
-
-  // calibrate();
-
-  scale1.set_scale(-72.62);
-
-  scale1.tare();
 
 }
 void calibrate()
@@ -119,24 +120,7 @@ void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
   Connection.mqtt_Publish(_TOPIC_PUBLISH, JSONmessageBuffer);
   Serial.println(JSONmessageBuffer);
 }
-void printLocalTime()
-{
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
-  {
-    Serial.println("Falha ao obter a hora");
-    return;
-  }
 
-  char timeStringBuff[50];
-  strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &timeinfo);
-
-  Serial.println(timeStringBuff);
-
-  Log.append_file("/log.txt", "ON: ");
-  Log.append_file("/log.txt", timeStringBuff);
-  Log.append_file("/log.txt", " ->");
-}
 void recebe(char *topic, byte *payload, unsigned int length)
 {
   if (strcmp(topic, "kilos/calibrate") == 0)
@@ -150,57 +134,4 @@ void recebe(char *topic, byte *payload, unsigned int length)
     long offset = scale1.get_offset();
     publish("Offset", String(offset), TOPIC_PUBLISH);
   }
-}
-signed short Stabilize(signed short value, signed short fdiff, unsigned short fcount)
-{
-  static unsigned short count_soft = 0xFFFF;
-  static unsigned short count_high_difference = 0xFFFF;
-  static signed int result = 0;
-
-  signed int dif;
-
-  /* Verify if value of variable is different */
-  if (result != value)
-  {
-    /* Calcule the different */
-    dif = value - result;
-    /* Verify if difference is higher of fdiff */
-    if ((dif > fdiff) || (dif < (fdiff * -1)))
-    {
-      /* Clear var of lower difference */
-      count_soft = 0;
-      /* if counter is higher of parameter */
-      if ((++count_high_difference) > fcount)
-      {
-        /* Clear counter */
-        count_high_difference = 0;
-        /* Make equal sensor and var */
-        result = value;
-      }
-    }
-    else
-    {
-      /* Clear var of lower difference */
-      count_high_difference = 0;
-      /* if counter is higher of parameter */
-      if ((++count_soft) > fcount)
-      {
-        /* Clear counter */
-        count_soft = 0;
-        /* Soft rise */
-        if (dif < 0)
-          --result;
-        else
-          ++result;
-      }
-    }
-  }
-  else
-  {
-    /* Clear counters */
-    count_soft = 0;
-    count_high_difference = 0;
-    result = value;
-  }
-  return result;
 }
