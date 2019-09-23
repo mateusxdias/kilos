@@ -4,9 +4,9 @@ void setup()
 {
   Serial.begin(115200);
 
-  Log.begin();
-  Log.list_dir("/");
-  Log.read_file("/log.txt");
+  // Log.begin();
+  // Log.list_dir("/");
+  // Log.read_file("/log.txt");
 
   Connection.connect_Wifi(SSID, PASS);
 
@@ -46,8 +46,8 @@ void loop()
     const char *cstr2 = str.c_str();
     Serial.println(cstr2);
 
-    Log.append_file("/log.txt", cstr2);
-    Log.append_file("/log.txt", ", ");
+    // Log.append_file("/log.txt", cstr2);
+    // Log.append_file("/log.txt", ", ");
 
     Connection.mqtt_Connect();
     Connection.subscribe_topic();
@@ -58,8 +58,8 @@ void loop()
     cstr2 = str.c_str();
     Serial.println(cstr2);
 
-    Log.append_file("/log.txt", cstr2);
-    Log.append_file("/log.txt", ", ");
+    // Log.append_file("/log.txt", cstr2);
+    // Log.append_file("/log.txt", ", ");
 
     delay(1000);
   }
