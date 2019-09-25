@@ -14,14 +14,6 @@ float tempC = 0;
 
 void setup()
 {
-  // pinMode(pin13, OUTPUT);
-  // pinMode(pin12, OUTPUT);
-
-  // ledcAttachPin(pin13, 0); //Atribuimos o pino 2 ao canal 0.
-  // ledcAttachPin(pin12, 1); //Atribuimos o pino 2 ao canal 0.
-  // ledcSetup(0, 1000, 10);  //Atribuimos ao canal 0 a frequencia de 1000Hz com resolucao de 10bits.
-  // ledcSetup(1, 1000, 10);  //Atribuimos ao canal 0 a frequencia de 1000Hz com resolucao de 10bits.
-
   Serial.begin(115200);
 
   Connection.wifi_connect(SSID, PASS);
@@ -68,42 +60,21 @@ void loop()
   {
     last_msg = millis();
 
-  int16_t adc0 = 0;
-  for (size_t i = 0; i < 10; i++)
-  {
-    adc0 += ads.readADC_SingleEnded(0);
-  }
-  adc0 /= 10; 
+    int16_t adc0 = 0;
+    for (size_t i = 0; i < 10; i++)
+    {
+      adc0 += ads.readADC_SingleEnded(0);
+    }
+    adc0 /= 10;
 
-  Voltage = (adc0 * 0.1875);
-  tempC = Voltage * 0.1;
-  Serial.print(adc0);
-  Serial.print(" ");
-  Serial.print(Voltage);
-  Serial.print(" ");
-  Serial.println(tempC);
-
-  // if (tempC > 21.5)
-  // {
-  //   ledcWrite(0, 200); //Escrevemos no canal 0, o duty cycle "i".
-  //   ledcWrite(1, 0); //Escrevemos no canal 0, o duty cycle "i".
-  // }
-  // else if (tempC < 21)
-  // {
-
-  //   ledcWrite(1, 200); //Escrevemos no canal 0, o duty cycle "i".
-  //   ledcWrite(0, 0); //Escrevemos no canal 0, o duty cycle "i".
-  // }
-  // else
-  // {
-  //   ledcWrite(0, 0); //Escrevemos no canal 0, o duty cycle "i".
-  //   ledcWrite(1, 0); //Escrevemos no canal 0, o duty cycle "i".
-
-  // }
-  // delay(500);
-
-
-    publish("raw", String(adc0),"tempC", String(tempC), TOPIC_PUBLISH);
+    Voltage = (adc0 * 0.1875);
+    tempC = Voltage * 0.1;
+    Serial.print(adc0);
+    Serial.print(" ");
+    Serial.print(Voltage);
+    Serial.print(" ");
+    Serial.println(tempC);
+    publish("raw", String(adc0), "tempC", String(tempC), TOPIC_PUBLISH);
   }
   Connection.mqtt_Loop();
 }
@@ -129,5 +100,4 @@ void publish(String _payload1, String _var1, String _payload2, String _var2, con
 
 void recebe(char *topic, byte *payload, unsigned int length)
 {
-
 }
