@@ -3,6 +3,8 @@
 #include <Adafruit_ADS1015.h>
 
 #define ANALOG_PIN 36
+#define pin13 13
+#define pin12 12
 
 Adafruit_ADS1115 ads(0x48);
 
@@ -12,9 +14,17 @@ float tempC = 0;
 
 void setup()
 {
+  // pinMode(pin13, OUTPUT);
+  // pinMode(pin12, OUTPUT);
+
+  // ledcAttachPin(pin13, 0); //Atribuimos o pino 2 ao canal 0.
+  // ledcAttachPin(pin12, 1); //Atribuimos o pino 2 ao canal 0.
+  // ledcSetup(0, 1000, 10);  //Atribuimos ao canal 0 a frequencia de 1000Hz com resolucao de 10bits.
+  // ledcSetup(1, 1000, 10);  //Atribuimos ao canal 0 a frequencia de 1000Hz com resolucao de 10bits.
+
   Serial.begin(115200);
 
-  Connection.connect_Wifi(SSID, PASS);
+  Connection.wifi_connect(SSID, PASS);
 
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
@@ -26,21 +36,13 @@ void setup()
   Connection.mqtt_Connect();
   Connection.subscribe_topic();
 
-  Connection.set_topic(TOPIC_SUBSCRIBE_CALIBRATE);
-  Connection.subscribe_topic();
-
-  Connection.set_topic(TOPIC_SUBSCRIBE_TARE);
-  Connection.subscribe_topic();
-
-  hx_setup();
-
   ads.begin();
 }
 void loop()
 {
   Connection.handle();
 
-  Connection.connect_Wifi(SSID, PASS);
+  Connection.wifi_connect(SSID, PASS);
 
   if (!Connection.mqtt_Connected())
   {
@@ -66,54 +68,58 @@ void loop()
   {
     last_msg = millis();
 
-    int16_t adc0 = 0;
-    adc0 = ads.readADC_SingleEnded(0);
-    Voltage = (adc0 * 0.1875);
-    tempC = Voltage * 0.1;
-    Serial.print(adc0);
-    Serial.print(" ");
-    Serial.print(Voltage);
-    Serial.print(" ");
-    Serial.println(tempC);
-
-    scale1.power_up();
-    int value1 = scale1.get_units(10);
-
-    Serial.print("Balança 1: ");
-    Serial.println(value1);
-
-    publish("value1", String(value1), TOPIC_PUBLISH);
+  int16_t adc0 = 0;
+  for (size_t i = 0; i < 10; i++)
+  {
+    adc0 += ads.readADC_SingleEnded(0);
   }
+  adc0 /= 10; 
 
+  Voltage = (adc0 * 0.1875);
+  tempC = Voltage * 0.1;
+  Serial.print(adc0);
+  Serial.print(" ");
+  Serial.print(Voltage);
+  Serial.print(" ");
+  Serial.println(tempC);
+
+  // if (tempC > 21.5)
+  // {
+  //   ledcWrite(0, 200); //Escrevemos no canal 0, o duty cycle "i".
+  //   ledcWrite(1, 0); //Escrevemos no canal 0, o duty cycle "i".
+  // }
+  // else if (tempC < 21)
+  // {
+
+  //   ledcWrite(1, 200); //Escrevemos no canal 0, o duty cycle "i".
+  //   ledcWrite(0, 0); //Escrevemos no canal 0, o duty cycle "i".
+  // }
+  // else
+  // {
+  //   ledcWrite(0, 0); //Escrevemos no canal 0, o duty cycle "i".
+  //   ledcWrite(1, 0); //Escrevemos no canal 0, o duty cycle "i".
+
+  // }
+  // delay(500);
+
+
+    publish("raw", String(adc0),"tempC", String(tempC), TOPIC_PUBLISH);
+  }
   Connection.mqtt_Loop();
-  delay(500);
 }
 void hx_setup()
 {
   scale1.begin(19, 18);
 
   scale1.set_gain(32);
-
 }
-void calibrate()
-{
-  scale1.set_scale();
-  scale1.tare();
-  Serial.println("Put known weight on ");
-  delay(5000);
-  int calibrate_value = scale1.get_units(10);
-  Serial.println(calibrate_value);
-  Serial.print(" Divide this value to the weight and insert it in the scale1.set_scale1() statement");
-  delay(10000);
-  publish("calibrate", String(calibrate_value), TOPIC_PUBLISH);
-  delay(10000);
-  ESP.restart();
-}
-void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
+void publish(String _payload1, String _var1, String _payload2, String _var2, const char *_TOPIC_PUBLISH)
 {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject &JSONencoder = JSONbuffer.createObject();
   JSONencoder[_payload1] = _var1;
+  JSONencoder[_payload2] = _var2;
+  JSONencoder["MAC"] = "BB:BB:BB:BB:BB:BC";
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
@@ -123,15 +129,5 @@ void publish(String _payload1, String _var1, const char *_TOPIC_PUBLISH)
 
 void recebe(char *topic, byte *payload, unsigned int length)
 {
-  if (strcmp(topic, "kilos/calibrate") == 0)
-  {
-    calibrate();
-  }
-  else
-  {
-    scale1.tare();
-    delay(1000);
-    long offset = scale1.get_offset();
-    publish("Offset", String(offset), TOPIC_PUBLISH);
-  }
+
 }
