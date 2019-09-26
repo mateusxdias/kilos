@@ -5,15 +5,14 @@
 #include <EEPROM.h>
 #include "HX711.h"
 
-
 //Bibliotecas Internas
 #include "esp32-hal-cpu.h"
 #include "soc/rtc.h"
 #include "time.h"
 
 //Define configurations do MQTT
-const char *SSID = "Positiva";
-const char *PASS = "#Positiva2019#";
+const char *SSID = "Colitor-Network";
+const char *PASS = "Colitor123";
 const char *TOPIC_SUBSCRIBE = "kilos";
 const char *TOPIC_PUBLISH = "kilos.positiva.local/BB:BB:BB:BB:BB:BC";
 const char *BROKER_MQTT = "mqtt.positiva.app";
@@ -30,8 +29,7 @@ long last_msg = 0;
 long t;
 
 //Define funções
-void publish(String _payload1, String _var1, String _payload2, String _var2, const char *_TOPIC_PUBLISH);
-
+void publish(String _payload1, String _var1, String _payload2, String _var2, String _payload3, String _var3, const char *_TOPIC_PUBLISH);
 void hx_setup();
 void calibrate();
 void printLocalTime();

@@ -21,7 +21,6 @@ void setup()
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
   Connection.ota();
-  Connection.func_recebe(recebe);
 
   Connection.set_server(BROKER_PORT, BROKER_MQTT);
 
@@ -29,6 +28,7 @@ void setup()
   Connection.subscribe_topic();
 
   ads.begin();
+  hx_setup();
 }
 void loop()
 {
@@ -56,7 +56,7 @@ void loop()
     delay(1000);
   }
 
-  if ((millis() - last_msg > 3000) && (Connection.mqtt_Connected()))
+  if ((millis() - last_msg > 5000) && (Connection.mqtt_Connected()))
   {
     last_msg = millis();
 
@@ -67,14 +67,23 @@ void loop()
     }
     adc0 /= 10;
 
+    scale1.power_up();
+
+    int strain = scale1.get_units(10);
+
     Voltage = (adc0 * 0.1875);
     tempC = Voltage * 0.1;
+
+    Serial.print("Balança 1: ");
+    Serial.print(strain);
+    Serial.print(" ");
     Serial.print(adc0);
     Serial.print(" ");
     Serial.print(Voltage);
     Serial.print(" ");
     Serial.println(tempC);
-    publish("raw", String(adc0), "tempC", String(tempC), TOPIC_PUBLISH);
+
+    publish("raw", String(adc0), "tempC", String(tempC), "strain", String(strain), TOPIC_PUBLISH);
   }
   Connection.mqtt_Loop();
 }
@@ -84,20 +93,17 @@ void hx_setup()
 
   scale1.set_gain(32);
 }
-void publish(String _payload1, String _var1, String _payload2, String _var2, const char *_TOPIC_PUBLISH)
+void publish(String _payload1, String _var1, String _payload2, String _var2, String _payload3, String _var3, const char *_TOPIC_PUBLISH)
 {
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject &JSONencoder = JSONbuffer.createObject();
   JSONencoder[_payload1] = _var1;
   JSONencoder[_payload2] = _var2;
+  JSONencoder[_payload3] = _var3;
   JSONencoder["MAC"] = "BB:BB:BB:BB:BB:BC";
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
   Connection.mqtt_Publish(_TOPIC_PUBLISH, JSONmessageBuffer);
   Serial.println(JSONmessageBuffer);
-}
-
-void recebe(char *topic, byte *payload, unsigned int length)
-{
 }
