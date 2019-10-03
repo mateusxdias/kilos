@@ -17,13 +17,10 @@ void setup()
   Serial.begin(115200);
 
   Connection.wifi_connect(SSID, PASS);
-
   Connection.set_topic(TOPIC_SUBSCRIBE);
   Connection.func_mac();
   Connection.ota();
-
   Connection.set_server(BROKER_PORT, BROKER_MQTT);
-
   Connection.mqtt_Connect();
   Connection.subscribe_topic();
 
@@ -83,7 +80,7 @@ void loop()
     Serial.print(" ");
     Serial.println(tempC);
 
-    publish("raw", String(adc0), "tempC", String(tempC), "strain", String(strain), TOPIC_PUBLISH);
+    publish("tempRaw", String(adc0), "tempC", String(tempC), "strain", String(strain), TOPIC_PUBLISH);
   }
   Connection.mqtt_Loop();
 }
@@ -100,7 +97,7 @@ void publish(String _payload1, String _var1, String _payload2, String _var2, Str
   JSONencoder[_payload1] = _var1;
   JSONencoder[_payload2] = _var2;
   JSONencoder[_payload3] = _var3;
-  JSONencoder["MAC"] = "BB:BB:BB:BB:BB:BD";
+  JSONencoder["mac"] = Connection.func_mac();
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));

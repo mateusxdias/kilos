@@ -14,7 +14,7 @@
 const char *SSID = "Kilos-Network";
 const char *PASS = "kilos123";
 const char *TOPIC_SUBSCRIBE = "kilos";
-const char *TOPIC_PUBLISH = "kilos.positiva.local/BB:BB:BB:BB:BB:BD";
+const char *TOPIC_PUBLISH = "kilos.positiva.local/master";
 const char *BROKER_MQTT = "mqtt.positiva.app";
 uint16_t BROKER_PORT = 1883;
 
