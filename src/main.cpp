@@ -91,7 +91,7 @@ void hx_setup()
 {
   scale1.begin(19, 18);
 
-  scale1.set_gain(32);
+  scale1.set_gain(128);
 }
 void publish(String _payload1, String _var1, String _payload2, String _var2, String _payload3, String _var3, const char *_TOPIC_PUBLISH)
 {
@@ -100,7 +100,7 @@ void publish(String _payload1, String _var1, String _payload2, String _var2, Str
   JSONencoder[_payload1] = _var1;
   JSONencoder[_payload2] = _var2;
   JSONencoder[_payload3] = _var3;
-  JSONencoder["MAC"] = "BB:BB:BB:BB:BB:BC";
+  JSONencoder["MAC"] = "BB:BB:BB:BB:BB:BX";
   JSONencoder["ip"] = Connection.ip();
   char JSONmessageBuffer[100];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));

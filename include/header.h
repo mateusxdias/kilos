@@ -14,7 +14,7 @@
 const char *SSID = "Colitor-Network";
 const char *PASS = "Colitor123";
 const char *TOPIC_SUBSCRIBE = "kilos";
-const char *TOPIC_PUBLISH = "kilos.positiva.local/BB:BB:BB:BB:BB:BC";
+const char *TOPIC_PUBLISH = "kilos.positiva.local/BB:BB:BB:BB:BB:BD";
 const char *BROKER_MQTT = "mqtt.positiva.app";
 uint16_t BROKER_PORT = 1883;
 
