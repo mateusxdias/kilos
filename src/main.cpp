@@ -88,7 +88,7 @@ void hx_setup()
 {
   scale1.begin(19, 18);
 
-  scale1.set_gain(32);
+  scale1.set_gain(128);
 }
 void publish(String _payload1, String _var1, String _payload2, String _var2, String _payload3, String _var3, const char *_TOPIC_PUBLISH)
 {
