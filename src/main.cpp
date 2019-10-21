@@ -2,9 +2,6 @@
 #include <Wire.h>
 #include <Adafruit_ADS1015.h>
 
-#define ANALOG_PIN 36
-#define pin13 13
-#define pin12 12
 
 Adafruit_ADS1115 ads(0x48);
 
