@@ -11,8 +11,8 @@
 #include "time.h"
 
 //Define configurations do MQTT
-const char *SSID = "Kilos-Network";
-const char *PASS = "kilos123";
+const char *SSID = "Positiva";
+const char *PASS = "#Positiva2019#";
 const char *TOPIC_SUBSCRIBE = "kilos";
 const char *TOPIC_PUBLISH = "kilos.positiva.local/master";
 const char *BROKER_MQTT = "mqtt.positiva.app";
